@@ -17,7 +17,9 @@ if ! docker compose version >/dev/null 2>&1; then
 fi
 
 echo "Building image and starting ROS 2 Humble VNC container..."
-docker compose up --build -d
+# docker compose up --build -d
+docker compose up -d
+
 
 echo
 echo "Container is running."

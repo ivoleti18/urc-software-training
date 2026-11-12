@@ -25,6 +25,9 @@ AStarPlanner::AStarPlanner(const rclcpp::NodeOptions & options)
   allow_unknown_ = declare_parameter<bool>("allow_unknown", false);
   // TODO(Lesson 10): declare map_topic, goal_topic, and plan_topic as string
   // parameters with these course defaults.
+  const auto map_topic = declare_parameter<std::string>("map_topic", "/map");
+  const auto goal_topic = declare_parameter<std::string>("goal_topic", "/goal_pose");
+  const auto plan_topic = declare_parameter<std::string>("plan_topic", "/plan");
 
   if (occupied_threshold_ < 0 || occupied_threshold_ > 100) {
     throw std::invalid_argument("occupied_threshold must be between 0 and 100");
