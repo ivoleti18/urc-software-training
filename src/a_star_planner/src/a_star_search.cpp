@@ -44,22 +44,118 @@ std::vector<int> astarSearch(
 
   g_score[start_index] = 0.0;
 
-  // TODO(Lesson 10, part 2): write the Euclidean-distance heuristic in meters.
-  // TODO(Lesson 10, part 3): define an open-set entry, a lowest-f-first
-  // priority queue, and push the start with f = heuristic(start).
-  // TODO(Lesson 10, part 4): while open is not empty, pop the best entry,
-  // discard stale entries, and mark the current cell closed.
-  // TODO(Lesson 10, part 5): when the goal is popped, reconstruct the path by
-  // following came_from back to the start and reverse it.
-  // TODO(Lesson 10, part 6): visit eight neighbors, reject blocked cells and
-  // diagonal corner cuts, then relax improved g-scores and push new entries.
+  auto heuristic = [&](int col, int row) {
+    
+    const double dc = static_cast<double>(col - goal_col);
+    const double dr = static_cast<double>(row - goal_row);
 
-  // These structures are intentionally ready for the TODO loop above. Until it
-  // is implemented, returning no path is the safe, buildable behavior.
-  (void)goal_index;
-  (void)g_score;
-  (void)came_from;
-  (void)closed;
+    return std::hypot(dc, dr) * grid.resolution;
+  };
+
+  struct Entry
+  {
+    double f;
+    int col;
+    int row;
+  };
+
+  auto cmp = [](const Entry & a, const Entry & b) {
+    return a.f > b.f;
+  };
+
+  std::priority_queue<Entry, std::vector<Entry>, decltype(cmp)> open(cmp);
+
+  
+  // start the code w the first cell
+  open.push({heuristic(start_col, start_row), start_col, start_row});
+
+  // cells needed to be explored
+  while (!open.empty()) {
+    const Entry current = open.top();
+    open.pop();
+
+    const std::size_t current_index = grid.index(current.col, current.row);
+
+    if (closed[current_index]) {
+      continue;
+    }
+    closed[current_index] = true;
+
+    // if the goal is reached then we can reconstruct the path
+    if (current_index == goal_index) {
+      std::vector<int> reversed;
+      int index = static_cast<int>(goal_index);
+
+      // when it is the first cell with no comeback it will be -1 and the loop will stop
+      while (index != -1) {
+        reversed.push_back(index);
+        index = came_from[static_cast<std::size_t>(index)];
+      }
+      return std::vector<int>(reversed.rbegin(), reversed.rend());
+    }
+
+    // otherwise we add all the neighbors to the open list
+    for (int neighbor = 0; neighbor < 9; ++neighbor) {
+      // TODO: coordinates, validity checks, move cost, and relaxation
+      // 2 offsets
+      const int dc = (neighbor % 3) - 1;
+      const int dr = (neighbor / 3) - 1;
+
+      // skip the current cell since it is already explored
+      if (dc == 0 && dr == 0) {
+        continue;
+      }
+      // neighbor coordinates
+      const int nc = current.col + dc;
+      const int nr = current.row + dr;
+
+      // if the square is blocked then fade
+      if (isBlocked(grid, blocked, nc, nr)) {
+        continue;
+      }
+
+      // done after to prevent out of bounds error
+      const std::size_t neighbor_index = grid.index(nc, nr);
+
+      // if it's already explored then fade
+      if (closed[neighbor_index]) {
+        continue;
+      }
+
+      // for diagonal, we also check the orthogonal neighbors to prevent cutting corners
+      if (dc != 0 && dr != 0) {
+        if (
+          isBlocked(grid, blocked, current.col + dc, current.row) ||
+          isBlocked(grid, blocked, current.col, current.row + dr)
+        ) {
+          continue;
+        }
+      }
+
+      // update the g_score with the new move cost
+      const double step_cost =
+        std::hypot(static_cast<double>(dc),
+                  static_cast<double>(dr)) * grid.resolution;
+
+      const double tentative_g =
+        g_score[current_index] + step_cost;
+
+      // checks if this score to the neighbor is better than a prev one
+      if (tentative_g < g_score[neighbor_index]) {
+        g_score[neighbor_index] = tentative_g;
+
+        came_from[neighbor_index] =
+          static_cast<int>(current_index);
+
+        open.push({
+          tentative_g + heuristic(nc, nr),
+          nc,
+          nr
+        });
+      }
+
+    }
+  }
   return {};
 }
 
