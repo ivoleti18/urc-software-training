@@ -24,6 +24,7 @@ def generate_launch_description():
                         parameters=[
                             {
                                 "use_sim_time": use_sim_time,
+                                "num_particles": 2000,
                                 "odom_topic": "/odometry/filtered",
                                 "scan_topic": "/lidar/scan",
                                 "map_topic": "/map",
